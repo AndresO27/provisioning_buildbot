@@ -30,12 +30,24 @@ BuildBot workers are deployed as Apptainer containers across all cluster nodes t
 To run the webserver (localhost:8010), please ssh with - ssh -L 127.0.0.1:8010:localhost:8010 {user@server}.
 Then, connect to localhost on any browser on http://localhost:8010.
 
-In this example, a worker was not initialized (by shutting down the node) to show how it is displayed in the web interface.
+In this example, a worker was not initialized on purpose (by shutting down the node) to show how it is displayed in the web interface.
 
 <img width="1596" height="104" alt="image" src="https://github.com/user-attachments/assets/f365a5b5-1495-4f4f-8739-49e80d89f5e9" />
 
+## Main Directory Scripts
 
+### `ipmiwrap`
 
-`take_mac_addresses`
+A wrapper script for IPMI commands that simplifies remote hardware management. It automatically handles authentication by reading credentials from a password file and appends `.ipmi` to the hostname for IPMI network access. Usage: `ipmiwrap <hostname> <ipmitool_commands>`.
+
+### `check_buildbot.sh`
+
+Checks the running status of a BuildBot instance by verifying the existence and validity of the `twistd.pid` file. Returns "running" if the process is active or "stopped" if the PID file is missing or the process has terminated.
+
+### `extract_keys.sh`
+
+Automates the backup of SSH host keys (ECDSA, ED25519, and RSA) from all 28 cluster nodes. This preserves node identity across reprovisioning, preventing SSH "host key changed" warnings when nodes are rebuilt. Keys are stored locally in the provisioning directory structure.
+
+### `take_mac_addresses`
 
 Captures network traffic using `tcpdump` to automatically discover and record MAC addresses of nodes during PXE boot. The script monitors DHCP requests for 800 seconds, filters for unique MAC addresses, and generates a JSON mapping file (`mac_address_database_ipmi.json`) linking each node identifier (l01-l28) to its corresponding MAC address for Cobbler provisioning.
