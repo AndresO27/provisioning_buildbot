@@ -1,0 +1,29 @@
+---
+- name: Read ipmi data base
+  include_tasks: load_database.yml
+
+# - name: Create and configure systems (ipmi)
+#   vars:
+#     sys: "{{ item }}"
+#   include_tasks: configure_system_ipmi.yml
+#   with_items: "{{ ipmi_data[ansible_hostname] }}"
+
+- name: Run cobbler sync
+  shell: cobbler sync
+
+- wait_for: timeout=10
+
+- name: Configure systems (ssh)
+  vars:
+    sys: "{{ item }}" 
+  include_tasks: configure_system_ssh.yml
+  with_items: "{{  ipmi_data[ansible_hostname] }}"
+
+- name: Configure systems (ib)
+  vars:
+    sys: "{{ item }}"
+  include_tasks: configure_system_ib.yml
+  with_items: "{{  ipmi_data[ansible_hostname] }}"
+
+- name: Run cobbler sync
+  shell: cobbler sync

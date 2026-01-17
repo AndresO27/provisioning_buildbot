@@ -1,0 +1,13 @@
+---
+
+- name: setup Control interface
+  shell: cobbler system edit --name="{{ sys.hostname }}" --hostname="{{ sys.hostname }}" --interface="{{ network.control.interface }}" --management=true --ip-address="{{ network.control.subnet | ansible.utils.ipmath(sys.hostID) }}" --netmask="{{ network.control.subnet | ansible.utils.ipaddr('netmask') }}" --dns-name="{{ sys.hostname }}.{{ network.control.domain }}" --mac-address="{{ sys.internal_MAC }}" --mgmt-classes="{{ sys.mgmtclass }}"
+
+
+- wait_for: timeout=1
+
+- name: set additional configuration
+  shell: cobbler system edit --name="{{ sys.hostname }}" --interface="{{ network.control.interface }}" --kernel-options="{{ cobbler_profile.kopts }}" --kernel-options-post="{{ cobbler_profile.kopts_post }}"
+
+
+- wait_for: timeout=1

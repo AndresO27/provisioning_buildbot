@@ -1,0 +1,54 @@
+---
+- name: Create snapshot for "{{ repo }}"
+  ansible.builtin.command: ./create_new_snapshot.sh
+  args:
+    chdir: /provisioning/repos/snapshots/{{ repo }}
+  register: result
+  ignore_errors: true
+
+- name: Update lastest for "{{ repo }}"
+  ansible.builtin.command: ./update_latest.sh
+  args:
+    chdir: /provisioning/repos/snapshots/{{ repo }}
+  when: result is succeeded
+
+- name: Update provision for "{{ repo }}"
+  ansible.builtin.command: ./update_provision.sh
+  args:
+    chdir: /provisioning/repos/snapshots/{{ repo }}
+  when: result is succeeded
+
+- name: Resolve all packages for "{{ repo }}"
+  ansible.builtin.command: make resolve
+  args:
+    chdir: /provisioning/repos/snapshots/{{ repo }}/latest
+  when: repo == 'minimal' and result is succeeded
+
+- name: Download packages for "{{ repo }}"
+  ansible.builtin.command: make download_latest
+  args:
+    chdir: /provisioning/repos/snapshots/{{ repo }}/latest
+  when: result is succeeded
+
+- name: Create repo "{{ repo }}"
+  ansible.builtin.command: make repo
+  args:
+    chdir: /provisioning/repos/snapshots/{{ repo }}/latest
+  when: result is succeeded
+
+- name: Set latest snapshot for "{{ repo }}"
+  ansible.builtin.file:
+    src: /provisioning/repos/snapshots/{{ repo }}/latest
+    dest: /provisioning/repos/{{ repo }}
+    state: link
+
+- name: Create cobbler repo "{{ repo }}"
+  ansible.builtin.shell: cobbler repo add --name={{ repo }} --mirror=/provisioning/repos/{{ repo }}
+  ignore_errors: true
+
+- name: Configure cobbler repo "{{ repo }}"
+  ansible.builtin.shell: cobbler repo edit --name={{ repo }} --breed=rsync --mirror-locally=True --keep-updated=True
+  ignore_errors: true
+
+- name: Sync repo "{{ repo }}"
+  ansible.builtin.shell: cobbler reposync --only={{ repo }}

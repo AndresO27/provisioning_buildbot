@@ -1,0 +1,65 @@
+---
+- name: Install apptainer
+  ansible.builtin.yum:
+    name:
+      - apptainer
+    state: latest
+    update_cache: true
+
+
+- name: Check if the venv is created in {{ buildbot_worker_venv_path }}
+  ansible.builtin.stat:
+    path: "{{ buildbot_worker_venv_path }}"
+  register: venv_created
+
+- ansible.builtin.debug:
+    msg: status {{ venv_created.stat.exists }}
+
+- name: Create container for venv directory
+  ansible.builtin.file:
+    path: /provisioning/venv_container
+    state: directory
+    mode: '0755'
+
+- name: Create the buildbot venv 
+  ansible.builtin.copy:
+    src: /provisioning/apptainer/buildbot.sif
+    dest: "{{ buildbot_worker_venv_path }}"
+    owner: root
+    group: root
+    mode: u=rwx,g=rx,o=rx
+    force: true
+  when: not venv_created.stat.exists
+
+- name: Create Buildbot directory
+  ansible.builtin.file:
+    path: "{{ buildbot_path }}"
+    state: directory
+    mode: '0755'
+  
+- name: Create Buildbot worker directory
+  ansible.builtin.file:
+    path: "{{ buildbot_worker_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Create the buildbot worker
+  ansible.builtin.shell: apptainer exec --bind {{ buildbot_worker_path }}:/worker {{ buildbot_worker_venv_path }} buildbot-worker create-worker /worker {{ dns_host_name }}:9989 {{ inventory_hostname_short }} password
+  args:
+    creates: /provisioning/buildbot/{{ inventory_hostname_short }}/buildbot.tac
+
+- name: Check if BuildBot is running using script
+  ansible.builtin.script: ../scripts/check_buildbot_worker.sh {{ buildbot_worker_path }}
+  register: buildbot_status
+  failed_when: false
+  changed_when: false
+
+- name: Display current BuildBot status
+  debug:
+    msg: "BuildBot status: {{ buildbot_status.stdout }}"
+
+- name: start the buildbot worker
+  ansible.builtin.shell: apptainer exec --bind {{ buildbot_worker_path }}:/worker {{ buildbot_worker_venv_path }} buildbot-worker start /worker 
+  when: 
+    - buildbot_status.stdout | trim != "running" or not venv_created.stat.exists
+

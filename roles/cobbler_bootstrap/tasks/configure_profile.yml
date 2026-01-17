@@ -1,0 +1,12 @@
+---
+- name: Check if {{ cobbler_profile.name }}-{{ item }} profile exists
+  ansible.builtin.command: cobbler profile report --name="{{ cobbler_profile.name }}-{{ item }}"
+  register: profile_exists
+
+- name: Create {{ item }} profile
+  ansible.builtin.shell: cobbler profile add --name="{{ cobbler_profile.name }}-{{ item }}" --parent="{{ cobbler_profile.distro }}"
+  when: profile_exists.stdout | regex_search('No profile found')
+
+- name: Configure {{ item }} profile
+  ansible.builtin.shell: cobbler profile edit --name={{ cobbler_profile.name }}-{{ item }} --autoinstall={{ cobbler_profile.variants_config[item].kickstart }} --repos='{{
+    cobbler_profile.variants_config[item].repos }}'

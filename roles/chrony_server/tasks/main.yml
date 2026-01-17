@@ -1,0 +1,21 @@
+---
+- name: Install chronyd daemon
+  ansible.builtin.yum:
+    pkg:
+      - chrony
+    state: installed
+
+- name: Copy chrony configuration
+  ansible.builtin.template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+
+- name: Restart chrony daemon
+  ansible.builtin.service:
+    name: chronyd
+    enabled: true
+    state: restarted

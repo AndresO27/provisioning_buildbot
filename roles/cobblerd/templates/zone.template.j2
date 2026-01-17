@@ -1,0 +1,17 @@
+\$TTL 300
+@                       IN      SOA     $cobbler_server. root.lammps.hpc. (
+                                        $serial   ; Serial
+                                        600         ; Refresh
+                                        1800         ; Retry
+                                        604800       ; Expire
+                                        300          ; TTL
+                                        )
+
+                        IN      NS      $cobbler_server.
+lammps                   IN      NS      $cobbler_server.
+ntp				CNAME     lammps
+
+
+$cname_record
+
+$host_record

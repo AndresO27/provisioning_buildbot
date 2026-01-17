@@ -1,0 +1,22 @@
+---
+- name: Configures compute nodes, CPU 
+  hosts: compute
+
+  vars:
+    host_mode: client
+    opt_mount_point: /data
+
+  vars_files:
+    - lammps_testing_configuration.yml
+    
+  roles:
+    - { role: systemtweaks, tags: [network] }
+    - { role: tuning, tags: [network] }
+    - { role: chrony_client, tags: [network] }
+    - { role: ssh_copy_hostkey, tags: [auth] }
+    - { role: ssh_copy_knownhosts, tags: [auth] }
+    - { role: ssh_cluster_internal, tags: [auth] }
+    - { role: nfs_client, tags: [storage] }
+    - { role: mount_raid, tags: [storage,mount_raid] }
+    - { role: software_compute, tags: [software] }
+    - { role: buildbot_worker, tags: [buildbot] }

@@ -1,0 +1,31 @@
+---
+- name: Install dnsmasq service
+  ansible.builtin.yum:
+    name: dnsmasq
+    state: latest
+
+- name: Check if dnsmasq config file exists
+  ansible.builtin.stat:
+    path: /etc/dnsmasq.conf
+  register: dnsmasq_config_ex
+
+- ansible.builtin.debug:
+    msg: status {{ dnsmasq_config_ex.stat.exists }}
+
+- name: Creating the dnsmasq config
+  ansible.builtin.shell: touch /etc/dnsmasq.conf
+  when: not dnsmasq_config_ex.stat.exists
+
+- name: Copy dnsmasq config
+  ansible.builtin.copy:
+    src: dnsmasq.conf
+    dest: /etc/dnsmasq.conf
+    owner: root
+    group: root
+    mode: u=rw,g=,o=
+
+- name: Restart the dnsmasq service
+  ansible.builtin.service:
+    name: dnsmasq
+    enabled: true
+    state: restarted

@@ -1,0 +1,6 @@
+---
+- name: Read ipmi data base
+  include_vars:
+    file: systems_database.yaml
+    name: ipmi_data
+...

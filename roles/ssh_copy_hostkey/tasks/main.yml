@@ -1,0 +1,32 @@
+---
+- name: Copy private SSH host keys
+  ansible.builtin.copy:
+    src: /provisioning/hostkeys/{{ inventory_hostname_short }}/{{ item }}
+    dest: /etc/ssh/{{ item }}
+    owner: root
+    group: ssh_keys
+    mode: u=rw,g=r,o=
+    force: true
+  with_items:
+    - ssh_host_ecdsa_key
+    - ssh_host_ed25519_key
+    - ssh_host_rsa_key
+
+- name: Copy public SSH host keys
+  ansible.builtin.copy:
+    src: /provisioning/hostkeys/{{ inventory_hostname_short }}/{{ item }}.pub
+    dest: /etc/ssh/{{ item }}.pub
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+  with_items:
+    - ssh_host_ecdsa_key
+    - ssh_host_ed25519_key
+    - ssh_host_rsa_key
+
+- name: Restart sshd
+  ansible.builtin.service:
+    name: sshd
+    enabled: true
+    state: restarted

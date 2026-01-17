@@ -1,0 +1,11 @@
+---
+- name: setup IB interface
+  shell: cobbler system edit --name="{{ sys.hostname }}" --interface="{{ network.ib.interface }}" --ip-address="{{ network.ib.subnet | ansible.utils.ipmath(sys.hostID) }}" --netmask="{{ network.ib.subnet | ansible.utils.ipaddr('netmask') }}" --dns-name="{{ sys.hostname }}.{{ network.ib.domain }}" --interface-type="infiniband" --static=1
+
+- wait_for: timeout=1
+
+- name: Delete default interface as per Cobbler bug
+  shell: cobbler system edit --name="{{ sys.hostname }}" --interface=default --delete-interface
+  ignore_errors: true
+
+- wait_for: timeout=1

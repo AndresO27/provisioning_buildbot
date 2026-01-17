@@ -1,0 +1,8 @@
+#!/bin/bash
+HOSTNAME=$1
+shift
+
+IPMI_USER=ADMIN
+PASSWORD_FILE=$IPMI_PASSWORD
+
+ipmitool -I lanplus -U $IPMI_USER -P $(<$PASSWORD_FILE) -H $HOSTNAME.ipmi $@

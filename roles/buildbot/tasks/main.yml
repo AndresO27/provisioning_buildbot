@@ -1,0 +1,81 @@
+---
+
+- name: Copy container recipe
+  ansible.builtin.copy:
+    src: buildbot.def
+    dest: /provisioning/apptainer/
+    owner: root
+    group: root
+    mode: u=rwx,g=rx,o=rx
+
+- name: Check if the venv is created in {{ buildbot_master_venv_path }}
+  ansible.builtin.stat:
+    path: "{{ buildbot_master_venv_path }}"
+  register: venv_created
+
+- ansible.builtin.debug:
+    msg: status {{ venv_created.stat.exists }}
+
+- name: Install python3-pip service
+  ansible.builtin.yum:
+    name: python3-pip
+    state: latest
+
+- name: Ensure virtualenv is installed
+  ansible.builtin.pip:
+    name: virtualenv
+
+- name: Creating the venv in {{ buildbot_master_venv_path }}
+  ansible.builtin.shell: python3.12 -m venv sandbox
+  args:
+    chdir: "{{ buildbot_venv_path }}master"
+  when: not venv_created.stat.exists
+  register: sandbox
+
+- name: Copy requirements.txt to host tmp
+  ansible.builtin.copy:
+    src: requirements.txt
+    dest: /tmp/requirements.txt
+  
+- name: Install specified python requirements in {{ buildbot_master_venv_path }}
+  ansible.builtin.pip:
+    requirements: /tmp/requirements.txt
+    virtualenv: "{{ buildbot_master_venv_path }}"
+  when: not venv_created.stat.exists
+    
+- name: Check if BuildBot is running using script
+  ansible.builtin.script: ../../../check_buildbot.sh
+  register: buildbot_status
+  failed_when: false
+  changed_when: false
+  
+- name: Display current BuildBot status
+  debug:
+    msg: "BuildBot status: {{ buildbot_status.stdout }}"
+
+- name: Start BuildBot master if not running
+  ansible.builtin.shell: |
+    cd {{ buildbot_master_path }}
+    source {{ buildbot_master_venv_path }}/bin/activate
+    buildbot start my_master
+  register: buildbot_start_result
+  when: buildbot_status.stdout | trim == "stopped"
+
+- name: Display start result
+  debug:
+    msg: "BuildBot start output: {{ buildbot_start_result.stdout }}"
+  when: buildbot_start_result.stdout is defined
+# - name: Check if buildbot master is created in {{ buildbot_master_path }}
+#   ansible.builtin.stat:
+#     path: "{{ buildbot_master_path }}"
+#   register: buildbot_created
+
+# - ansible.builtin.debug:
+#     msg: status {{ buildbot_created.stat.exists }}
+
+# - name: Create the master if not created yet 
+
+
+
+
+# buildbot create-master my_master

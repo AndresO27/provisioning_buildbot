@@ -1,0 +1,72 @@
+---
+- name: Install utility packages
+  ansible.builtin.yum:
+    name:
+      - gnuplot
+      - emacs
+      - nano
+      - tmux
+      - perf
+      - ccache
+      - htop
+      - strace
+      - ltrace
+      - lsof
+      - python3-matplotlib
+      - numpy
+      - tcsh
+      - zsh
+      - numactl
+      - python-virtualenv
+      - python-lxml
+      - libicu
+      - squashfs-tools
+      - lapack
+      - libnsl
+      - traceroute
+    state: latest
+    update_cache: true
+
+- name: Remove utility packages
+  ansible.builtin.yum:
+    name:
+      - screen
+      - cmake
+      - vtk
+      - R-core
+      - postgresql
+      - postgresql-devel
+      - postgresql-libs
+    state: removed
+
+- name: Install runtime packages
+  ansible.builtin.yum:
+    name:
+      - gsl
+      - fftw
+      - fftw-libs
+      - libpng
+      - zlib
+      - libjpeg-turbo
+      - openblas
+      - mesa-dri-drivers
+      - gmp
+      - mpfr
+      - perl-core
+    state: latest
+    update_cache: true
+
+- name: Create Apptainer state folders
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+    state: directory
+  with_items:
+    - /var/apptainer/
+    - /var/apptainer/mnt
+    - /var/apptainer/mnt/container
+    - /var/apptainer/mnt/final
+    - /var/apptainer/mnt/overlay
+    - /var/apptainer/mnt/session

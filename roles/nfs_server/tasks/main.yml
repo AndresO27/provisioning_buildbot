@@ -1,0 +1,17 @@
+---
+- name: Install nfs server
+  ansible.builtin.package:
+    name: [nfs-utils, nfs4-acl-tools, portmap]
+    state: installed
+
+- name: Nfs-server
+  ansible.builtin.service:
+    name: nfs-server
+    enabled: true
+    state: started
+
+- name: Copy exportfs
+  ansible.builtin.template:
+    src: exports.j2
+    dest: /etc/exports
+  notify: Update exports

@@ -1,0 +1,4 @@
+This file contains all the information about the compute nodes:
+hostID, hostname, serial number, IPMI and Internal Mac, Passwords, etc
+
+Removed for security reasons 

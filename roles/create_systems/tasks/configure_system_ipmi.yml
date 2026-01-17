@@ -1,0 +1,11 @@
+---
+- name: add system
+  shell: 'cobbler system add --name="{{ sys.hostname }}" --profile="{{ system_profile[sys.mgmtclass] }}" --status=production --interface=ipmi'
+  ignore_errors: true
+
+- wait_for: timeout=1
+
+- name: setup IPMI interface
+  shell: cobbler system edit --name="{{ sys.hostname }}" --interface=ipmi --ip-address="{{ network.ipmi.subnet | ansible.utils.ipmath( sys.hostID ) }}" --netmask="{{ network.ipmi.subnet | ansible.utils.ipaddr('netmask') }}" --dns-name="{{ sys.hostname }}.{{ network.ipmi.domain }}" --mac-address="{{ sys.IPMI_MAC }}"
+
+- wait_for: timeout=1

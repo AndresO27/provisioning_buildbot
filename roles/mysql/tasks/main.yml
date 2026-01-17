@@ -1,0 +1,72 @@
+---
+- name: Install mariadb
+  ansible.builtin.yum:
+    name:
+      - mariadb-devel
+      - mariadb-server
+      - rrdtool-devel
+      - python3-mysqlclient
+    state: latest
+    update_cache: true
+
+- name: Sets the root password
+  community.mysql.mysql_user:
+    user: root
+    password: "{{ mysql_root_password }}"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Deletes all anonymous user accounts
+  community.mysql.mysql_user:
+    user: ""
+    host_all: true
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    state: absent
+
+- name: Secures the MySQL root user for IPV6 localhost (::1)
+  community.mysql.mysql_user:
+    user: root
+    password: "{{ mysql_root_password }}"
+    host: ::1
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Secures the MySQL root user for IPV4 localhost (127.0.0.1)
+  community.mysql.mysql_user:
+    user: root
+    password: "{{ mysql_root_password }}"
+    host: 127.0.0.1
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Secures the MySQL root user for localhost domain (localhost)
+  community.mysql.mysql_user:
+    user: root
+    password: "{{ mysql_root_password }}"
+    host: localhost
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Secures the MySQL root user for server_hostname domain
+  community.mysql.mysql_user:
+    user: root
+    password: "{{ mysql_root_password }}"
+    host: "{{ ansible_fqdn }}"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Secures the MySQL root user for server_hostname domain
+  community.mysql.mysql_user:
+    user: root
+    password: "{{ mysql_root_password }}"
+    host: 192.168.20.1
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+
+- name: Removes the MySQL test database
+  community.mysql.mysql_db:
+    db: test
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    state: absent

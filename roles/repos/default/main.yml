@@ -1,0 +1,6 @@
+---
+repos:
+  - minimal
+  - zfs
+
+update_repos: false

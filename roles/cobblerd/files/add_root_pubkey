@@ -1,0 +1,7 @@
+#This configures passwordless SSH login for root using a specific public key from a remote machine.
+mkdir --mode=0700 /root/.ssh
+cat >> /root/.ssh/authorized_keys << EOF
+ssh-rsa ...
+EOF
+chmod 0600 /root/.ssh/authorized_keys
+

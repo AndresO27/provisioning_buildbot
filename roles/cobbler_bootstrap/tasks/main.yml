@@ -1,0 +1,59 @@
+---
+- name: Create folder for iso
+  ansible.builtin.file:
+    path: /provisioning/iso
+    state: directory
+    owner: root
+    group: root
+    mode: "0775"
+    recurse: true
+
+- name: Create /mnt/iso folder
+  ansible.builtin.file:
+    path: /mnt/iso
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Check if Almalinux Distro has been imported
+  ansible.builtin.command: cobbler profile report --name {{ cobbler_profile.distro }}
+  register: distro_exists
+
+- name: Download Almalinux ISO
+  ansible.builtin.get_url:
+    url: "{{ cobbler_profile.url }}"
+    dest: /provisioning/iso/{{ cobbler_profile.iso }}
+    checksum: "{{ cobbler_profile.checksum }}"
+  when: distro_exists.stdout | regex_search('No profile found')
+
+- name: Mount Almalinux ISO
+  ansible.posix.mount:
+    path: /mnt/iso
+    src: /provisioning/iso/{{ cobbler_profile.iso }}
+    fstype: iso9660
+    opts: loop,ro
+    state: mounted
+  when: distro_exists.stdout | regex_search('No profile found')
+
+- name: Import Almalinux to cobbler
+  ansible.builtin.shell: cobbler import --arch=x86_64 --path=/mnt/iso --name={{ cobbler_profile.name }}
+  when: distro_exists.stdout | regex_search('No profile found')
+
+- name: Unmount ISO (and delete fstab entry)
+  ansible.posix.mount:
+    path: /mnt/iso
+    state: absent
+  when: distro_exists.stdout | regex_search('No profile found')
+
+- name: Configure profiles
+  ansible.builtin.include_tasks: configure_profile.yml
+  with_items: "{{  cobbler_profile.variants }}"
+
+- name: Create management class
+  ansible.builtin.shell: cobbler mgmtclass add --name={{ item }}
+  with_items: "{{ mgmtclass }}"
+  ignore_errors: true
+
+- name: Run cobbler sync
+  ansible.builtin.shell: cobbler sync

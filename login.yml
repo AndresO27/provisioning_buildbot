@@ -1,0 +1,25 @@
+---
+- name: Configures the login_node
+  hosts: localhost
+
+  vars_files:
+    - lammps_testing_configuration.yml
+  
+  vars:
+    host_mode: client
+    opt_mount_point: /data
+
+  roles:  
+    - { role: cobblerd, tags: [cobblerd,bootstrap] } 
+    - { role: repos, tags: [repos,bootstrap] }
+    - { role: ansiblemaster, tags: [ansiblemaster,bootstrap] }
+    - { role: cobbler_bootstrap, tags: [cobbler_bootstrap, bootstrap] }
+    - { role: create_systems, tags: [bootstrap, create_systems] } 
+    - { role: tuning, tags: [network] }
+    - { role: chrony_server, tags: [network] }
+    - { role: login_firewall, tags: [login,login_firewall] }
+    - { role: mail_sender, tags: [mail] }
+    - { role: buildbot, tags: [buildbot]}
+    - { role: nfs_client, tags: [storage] }
+    - { role: mount_raid, tags: [storage,mount_raid] }
+    - { role: mysql, tags: [mysql]}

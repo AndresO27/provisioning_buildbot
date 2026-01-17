@@ -1,0 +1,57 @@
+---
+#- name: Change performance profile
+#  shell: tuned-adm profile latency-performance
+
+- name: Install kernel-tools
+  ansible.builtin.yum:
+    name: kernel-tools
+    state: latest
+
+- name: Set maximum number of TCP connections per client
+  ansible.posix.sysctl:
+    name: net.core.somaxconn
+    value: 2048
+    state: present
+    sysctl_set: true
+    reload: true
+
+- name: Set maximum UDP buffer size
+  ansible.posix.sysctl:
+    name: net.core.rmem_max
+    value: 26214400
+    state: present
+    sysctl_set: true
+    reload: true
+
+- name: Disable stack pointer randomization
+  ansible.posix.sysctl:
+    name: kernel.randomize_va_space
+    value: 0
+    state: present
+    sysctl_set: true
+    reload: true
+
+- name: Install missing ibverbs package
+  ansible.builtin.yum:
+    name:
+      - libibverbs-devel
+      - pmix-devel
+    state: latest
+
+- name: Configures RDMA
+  ansible.builtin.copy:
+    src: rdma.conf
+    dest: /etc/rdma/modules/rdma.conf
+    mode: 0644
+    owner: root
+    group: root
+
+- name: Set limits.conf
+  ansible.builtin.blockinfile:
+    path: /etc/security/limits.conf
+    insertbefore: "# End of file"
+    block: |
+      * soft stack unlimited
+      * hard stack unlimited
+      * soft memlock 33554432
+      * hard memlock unlimited

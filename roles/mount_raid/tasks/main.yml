@@ -1,0 +1,15 @@
+- name: Create folder to mount data
+  ansible.builtin.file:
+    path: "{{ nfs.data.mount_point }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Mount data folder
+  ansible.posix.mount:
+    path: "{{ nfs.data.mount_point }}"
+    src: "{{ nfs.host }}:{{ nfs.data.prefix }}"
+    opts: "{{ nfs.options }}"
+    fstype: "{{ nfs.fstype }}"
+    state: mounted

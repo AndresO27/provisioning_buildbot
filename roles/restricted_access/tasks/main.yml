@@ -1,0 +1,7 @@
+---
+- name: Ensure PAM module is used
+  ansible.builtin.blockinfile:
+    path: /etc/pam.d/sshd
+    insertafter: account    required     pam_nologin.so
+    content: |
+      account    required     pam_access.so

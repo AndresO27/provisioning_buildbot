@@ -1,0 +1,30 @@
+#set srv = $getVar('http_server','')
+#set system_name = $getVar('system_name','')
+#set runfirstboot = "curl \"http://%s/cblr/svc/op/trig/mode/firstboot/%s/%s\" -o /dev/null" % (srv, "system", system_name)
+
+# create systemd service
+cat >> /etc/systemd/system/cobbler_report_boot.service << EOF
+[Unit]
+Description=Report back to master node
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/cobbler_report_boot
+
+[Install]
+WantedBy=network-online.target
+EOF
+
+# create script to send request
+cat >> /usr/local/bin/cobbler_report_boot << EOF
+\#!/bin/bash
+#echo $runfirstboot
+
+EOF
+
+chmod 700 /etc/systemd/system/cobbler_report_boot.service
+chmod 700 /usr/local/bin/cobbler_report_boot
+
+systemctl daemon-reload
+systemctl enable cobbler_report_boot

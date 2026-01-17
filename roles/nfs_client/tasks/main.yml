@@ -1,0 +1,5 @@
+---
+- name: Install nfs package
+  ansible.builtin.package:
+    name: nfs-utils
+    state: latest

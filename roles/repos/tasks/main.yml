@@ -1,0 +1,13 @@
+---
+- name: Configure repositories
+  vars:
+    repo: "{{ item }}"
+  ansible.builtin.include_tasks: configure_repo.yml
+  with_items: "{{ repos }}"
+
+- name: Populate repositories
+  vars:
+    repo: "{{ item }}"
+  ansible.builtin.include_tasks: populate_repo.yml
+  with_items: "{{ repos }}"
+  #when: update_repos

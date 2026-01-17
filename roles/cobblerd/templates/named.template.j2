@@ -1,0 +1,36 @@
+acl servicenets { 192.168.0.0/20; 192.168.16.0/20; 192.168.32.0/20; };
+
+options {
+          listen-on port 53 { localhost; servicenets; };
+          directory       "@@bind_zonefiles@@";
+	      forwarders      { {{ cobbler_profile.forwarder }}; };
+          dump-file       "@@bind_zonefiles@@/data/cache_dump.db";
+          statistics-file "@@bind_zonefiles@@/data/named_stats.txt";
+          memstatistics-file "@@bind_zonefiles@@/data/named_mem_stats.txt";
+          allow-query     { localhost; servicenets; };
+          recursion yes;
+          dnssec-validation yes;
+};
+
+# does not work on openSUSE Tumbleweed atm
+logging {
+        channel default_debug {
+                file "data/named.run";
+                severity dynamic;
+        };
+};
+
+#for $zone in $forward_zones
+zone "${zone}." {
+    type master;
+    file "$zone";
+};
+
+#end for
+#for $zone, $arpa in $reverse_zones
+zone "${arpa}." {
+    type master;
+    file "$zone";
+};
+
+#end for

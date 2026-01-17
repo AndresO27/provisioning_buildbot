@@ -1,0 +1,15 @@
+Bootstrap: docker
+From: python:3.9
+
+%post
+	python3.9 -m venv /provisioning/venv/sandbox
+	. /provisioning/venv/sandbox/bin/activate
+	pip install buildbot-worker
+	pip install setuptools-trial	
+
+%environment
+	export VIRTUAL_ENV=/provisioning/venv/sandbox
+	export PATH="$VIRTUAL_ENV/bin:$PATH"
+
+%runscript
+    exec /bin/bash "@" 

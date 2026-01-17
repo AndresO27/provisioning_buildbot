@@ -1,0 +1,38 @@
+- name: Enable use of internal cluster key
+  ansible.builtin.copy:
+    src: ssh_config
+    dest: /etc/ssh/ssh_config
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+
+- name: Copy private SSH root key for compute nodes
+  ansible.builtin.copy:
+    src: /root/.ssh/{{ item }}
+    dest: /root/.ssh/{{ item }}
+    owner: root
+    group: root
+    mode: u=rw,g=,o=
+    force: true
+  with_items:
+    - id_rsa_internal
+
+- name: Copy public SSH root key for compute nodes
+  ansible.builtin.copy:
+    src: /root/.ssh/{{ item }}.pub
+    dest: /root/.ssh/{{ item }}.pub
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+  with_items:
+    - id_rsa_internal
+
+- name: Enable root internal compute key
+  ansible.builtin.lineinfile:
+    path: /root/.ssh/authorized_keys
+    line: ssh-rsa ...
+    owner: root
+    group: root
+    mode: u=rw,g=,o=

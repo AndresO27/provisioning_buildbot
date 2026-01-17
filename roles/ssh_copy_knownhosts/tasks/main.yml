@@ -1,0 +1,8 @@
+---
+- name: Copy ssh_known_hosts from master
+  ansible.builtin.copy:
+    src: /etc/ssh/ssh_known_hosts
+    dest: /etc/ssh/ssh_known_hosts
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r

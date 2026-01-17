@@ -1,0 +1,66 @@
+#pip3.9 install ansible
+# ansible-galaxy collection install ansible.posix 
+# ansible-galaxy collection install ansible.utils:==2.11.0
+# ansible-galaxy collection install ansible.netcommon:==4.0.0
+
+---
+- name: Install ansible
+  ansible.builtin.yum:
+    pkg:
+      - ansible
+      - python3-mysqlclient
+    state: installed
+
+- name: Install ansible collections
+  ansible.builtin.shell: |
+    ansible-galaxy collection install ansible.utils:==2.11.0 
+    ansible-galaxy collection install ansible.netcommon:==4.0.0 
+    ansible-galaxy collection install ansible.posix
+
+- name: Copy ansible.cfg
+  ansible.builtin.copy:
+    src: ansible.cfg
+    dest: /etc/ansible/ansible.cfg
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+
+- name: Remove default hosts file
+  ansible.builtin.file:
+    state: absent
+    path: /etc/ansible/hosts
+
+- name: Create hosts directory
+  ansible.builtin.file:
+    path: /etc/ansible/hosts
+    owner: root
+    group: root
+    state: directory
+    mode: u+rwx,g=rx,o=rx
+
+- name: Copy static inventory file
+  ansible.builtin.template:
+    src: hosts.j2
+    dest: /etc/ansible/hosts/hosts
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+
+- name: Copy dynamic inventory config
+  ansible.builtin.template:
+    src: cobbler.ini.j2
+    dest: /etc/ansible/hosts/cobbler.ini
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+
+- name: Copy dynamic inventory file
+  ansible.builtin.copy:
+    src: cobbler.py
+    dest: /etc/ansible/hosts/cobbler.py
+    owner: root
+    group: root
+    mode: u=rwx,g=rx,o=rx

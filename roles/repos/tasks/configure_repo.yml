@@ -1,0 +1,68 @@
+---
+- name: Create repo directory "{{ repo }}"
+  ansible.builtin.file:
+    path: /provisioning/repos/snapshots/{{ repo }}/{{ dirs }}
+    state: directory
+    group: root
+    mode: "0775"
+    recurse: true
+  with_items:
+    - template
+    - scripts
+  loop_control:
+    loop_var: dirs
+
+- name: Copy creation files for repo "{{ repo }}"
+  ansible.builtin.copy:
+    src: "{{ file }}"
+    dest: /provisioning/repos/snapshots/{{ repo }}/{{ file }}
+    owner: root
+    group: root
+    mode: u=rwx,g=r,o=r
+    force: true
+  with_items:
+    - create_new_snapshot.sh
+    - update_latest.sh
+    - update_provision.sh
+  loop_control:
+    loop_var: file
+
+- name: Copy script files for repo "{{ repo }}"
+  ansible.builtin.copy:
+    src: "{{ file }}"
+    dest: /provisioning/repos/snapshots/{{ repo }}/scripts/{{ file }}
+    owner: root
+    group: root
+    mode: u=rwx,g=r,o=r
+    force: true
+  with_items:
+    - create_rpms_snapshot.sh
+    - create_template.sh
+    - resolve.sh
+  loop_control:
+    loop_var: file
+
+- name: Copy template files for repo "{{ repo }}"
+  ansible.builtin.find:
+    path: "{{ role_path }}/files"
+    patterns: "{{ repo }}*"
+  register: files
+
+- name: Copy template files for repo "{{ repo }}"
+  ansible.builtin.set_fact:
+    tmp_files:
+      - path: minimal_rpms.names
+      - path: zfs_rpms.names
+      - path: Makefile
+
+- name: Copy template files for repo "{{ repo }}"
+  ansible.builtin.copy:
+    src: "{{ file.path }}"
+    dest: /provisioning/repos/snapshots/{{ repo }}/template/{{ file.path | regex_replace('^.+?_', '') }}
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+  with_items: "{{ tmp_files }}"
+  loop_control:
+    loop_var: file

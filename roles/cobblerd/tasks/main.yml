@@ -1,0 +1,166 @@
+---
+- name: Install pre-requisites
+  ansible.builtin.yum:
+    name:
+      - python3-libselinux
+    state: installed
+
+- name: Disable selinux
+  ansible.builtin.lineinfile:
+    dest: /etc/sysconfig/selinux
+    regexp: ^SELINUX=
+    line: SELINUX=disabled
+
+- name: Stop selinux
+  ansible.posix.selinux:
+    state: disabled
+
+- name: Stop firewall
+  ansible.builtin.service:
+    name: firewalld
+    state: stopped
+    enabled: false
+
+- name: Enable repositories in YUM
+  ansible.builtin.shell: |
+    dnf config-manager --set-enabled crb
+    dnf config-manager --set-enabled highavailability
+  ignore_errors: true
+
+- name: Install Epel release
+  ansible.builtin.yum:
+    name:
+      - epel-release
+    state: installed  
+
+- name: Install Cobbler and dependencies
+  ansible.builtin.yum:
+    name:
+      - cobbler
+      - bind
+      - tftp-server
+      - pykickstart
+      - bind-utils
+      - syslinux
+      - yum-utils
+      - dhcp-server
+      # - fence-agents-all
+    state: installed
+
+- name: Copy cobblerd settings file
+  ansible.builtin.template:
+    src: settings.yaml.j2
+    dest: /etc/cobbler/settings.yaml
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+
+- name: Copy template files
+  ansible.builtin.template:
+    src: "{{ item }}"
+    dest: /etc/cobbler/{{ item | regex_replace('.j2', '') }}
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+  with_items:
+    - dhcp.template.j2
+    - named.template.j2
+    - zone.template.j2
+    - secondary.template
+
+- name: Copy reverse zone template files
+  vars:
+    domain: "{{ item.domain }}"
+  ansible.builtin.template:
+    src: reverse_zone.j2
+    dest: /etc/cobbler/zone_templates/{{ item.subnet.split('.')[0:3] | join('.') }}
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+  with_items:
+    - "{{ network.ipmi }}"
+    - "{{ network.control }}"
+    - "{{ network.ib }}"
+
+- name: Copy forward zone template files
+  vars:
+    ip: "{{ item.subnet | ansible.utils.ipmath(1) }}"
+  ansible.builtin.template:
+    src: forward_zone.j2
+    dest: /etc/cobbler/zone_templates/{{ item.domain }}
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+  with_items:
+    - "{{ network.ipmi }}"
+    - "{{ network.control }}"
+    - "{{ network.ib }}"
+
+- name: Copy kickstart file
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /var/lib/cobbler/templates/{{ item }}
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+  with_items:
+    - compute.ks
+    - storage.ks
+    
+- name: Copy snippet files
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: /var/lib/cobbler/snippets/{{ item }}
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+    force: true
+  with_items:
+    - add_root_pubkey
+    - add_report_boot
+
+- name: Enable/start httpd service
+  ansible.builtin.service:
+    name: httpd
+    state: started
+    enabled: true
+
+- name: Enable/start named service
+  ansible.builtin.service:
+    name: named
+    state: started
+    enabled: true
+
+- name: Enable/start cobblerd service
+  ansible.builtin.service:
+    name: cobblerd
+    state: restarted
+    enabled: true
+
+- ansible.builtin.wait_for: timeout=1
+# - name: Copy firstboot ansible trigger
+#   ansible.builtin.copy:
+#     src: run_ansible_trigger.sh
+#     dest: /var/lib/cobbler/triggers/install/firstboot/run_ansible_trigger.sh
+#     owner: root
+#     group: root
+#     mode: u=rwx,g=rx,o=rx
+#     force: true
+
+- name: Run mkloaders
+  ansible.builtin.shell: cobbler mkloaders
+  ignore_errors: true
+
+- name: Do cobbler sync
+  ansible.builtin.shell: cobbler sync
+
+- name: Enable/start tftp service
+  ansible.builtin.service:
+    name: tftp
+    state: started
+    enabled: true

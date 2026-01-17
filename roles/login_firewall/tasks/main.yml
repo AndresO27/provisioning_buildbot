@@ -1,0 +1,85 @@
+---
+- name: Disable TCP timestamp responses
+  ansible.posix.sysctl:
+    name: net.ipv4.tcp_timestamps
+    value: 0
+    state: present
+    sysctl_set: true
+    reload: true
+
+- name: Disable ICMP redirection
+  ansible.posix.sysctl:
+    name: "{{ item }}"
+    value: 0
+    state: present
+    sysctl_set: true
+    reload: true
+  with_items:
+    - net.ipv4.conf.all.accept_redirects
+    - net.ipv4.conf.default.accept_redirects
+    - net.ipv4.conf.all.secure_redirects
+    - net.ipv4.conf.default.secure_redirects
+
+- name: Allow IP Forwarding
+  ansible.posix.sysctl:
+    name: net.ipv4.ip_forward
+    value: 1
+    state: present
+    sysctl_set: true
+    reload: true
+
+- name: Disable IP Source Routing
+  ansible.posix.sysctl:
+    name: net.ipv4.conf.all.accept_source_route
+    value: 0
+    state: present
+    sysctl_set: true
+    reload: true
+
+- name: Disable firewalld
+  ansible.builtin.systemd:
+    name: firewalld
+    enabled: false
+    state: stopped
+    masked: true
+
+- name: Install iptables service
+  ansible.builtin.yum:
+    name: iptables-services
+    state: latest
+
+- name: Copy iptables config
+  ansible.builtin.copy:
+    src: iptables
+    dest: /etc/sysconfig/iptables
+    owner: root
+    group: root
+    mode: u=rw,g=,o=
+
+- name: Enable iptables firewall
+  ansible.builtin.service:
+    name: iptables
+    enabled: true
+    state: restarted
+
+- name: Copy sshd configuration
+  ansible.builtin.copy:
+    src: sshd_config
+    dest: /etc/ssh/sshd_config
+    owner: root
+    group: root
+    mode: u=rw,g=,o=
+
+- name: Reload sshd daemon
+  ansible.builtin.service:
+    name: sshd
+    enabled: true
+    state: restarted
+
+- name: Disable anonymous root login
+  ansible.builtin.copy:
+    src: securetty
+    dest: /etc/securetty
+    owner: root
+    group: root
+    mode: u=rw,g=,o=

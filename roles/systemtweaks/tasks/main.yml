@@ -1,0 +1,20 @@
+---
+- name: Remove 'myhostname' from nsswitch.conf
+  ansible.builtin.lineinfile:
+    path: /etc/nsswitch.conf
+    backrefs: true
+    regexp: ^(hosts:.*)myhostname(.*)
+    line: \1 \2
+
+- name: Remove ipmi network config if still exists
+  ansible.builtin.file:
+    path: /etc/sysconfig/network-scripts/ifcfg-ipmi
+    state: absent
+
+- name: Ensure journal folder exists for persistent journald
+  ansible.builtin.file:
+    path: /var/log/journal
+    state: directory
+
+- name: Restart journald using USR1
+  ansible.builtin.shell: killall -USR1 systemd-journald

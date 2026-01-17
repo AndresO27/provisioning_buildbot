@@ -1,0 +1,17 @@
+---
+- name: Configures the storage node of ICMS Cluster
+  hosts: storage
+  vars_files: lammps_testing_configuration.yml
+  vars:
+    host_mode: client
+    opt_mount_point: /data
+
+  roles:
+    - { role: ssh_copy_hostkey, tags: [auth] }
+    - { role: ssh_copy_knownhosts, tags: [auth] }
+    - { role: ssh_cluster_internal, tags: [auth] }
+    - { role: restricted_access, tags: [auth] }
+    - { role: systemtweaks, tags: [network] }
+    - { role: tuning, tags: [network] }
+    - { role: chrony_client, tags: [network] }
+    - { role: nfs_server, tags: [storage] }

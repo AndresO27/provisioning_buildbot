@@ -1,0 +1,17 @@
+\$TTL 300
+@                       IN      SOA     $cobbler_server. root.{{ ansible_hostname }}.{{ network.control.domain }}. (
+                                        $serial   ; Serial
+                                        600         ; Refresh
+                                        1800         ; Retry
+                                        604800       ; Expire
+                                        300          ; TTL
+                                        )
+
+                        IN      NS      $cobbler_server.
+{{ ansible_hostname }}                  IN      A       $cobbler_server
+ntp                             CNAME   {{ ansible_hostname }}
+
+1    IN  PTR  {{ ansible_hostname }}.{{ domain }}.;
+$cname_record
+
+$host_record
